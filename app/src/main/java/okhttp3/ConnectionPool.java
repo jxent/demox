@@ -192,17 +192,17 @@ public final class ConnectionPool {
      * -1 if no further cleanups are required.
      */
     long cleanup(long now) {
-        int inUseConnectionCount = 0;
-        int idleConnectionCount = 0;
-        RealConnection longestIdleConnection = null;
-        long longestIdleDurationNs = Long.MIN_VALUE;
+        int inUseConnectionCount = 0;   // 使用中的链接的计数
+        int idleConnectionCount = 0;    // 空闲链接的计数
+        RealConnection longestIdleConnection = null;        // 最长空闲链接
+        long longestIdleDurationNs = Long.MIN_VALUE;        // 最长空闲链接的空闲时长
 
-        // Find either a connection to evict, or the time that the next eviction is due.
+        // Find either a connection to evict, or the time that the next eviction is due. 查找出一个可以被清理的链接并清理或者返回一个下次执行的间隔时长
         synchronized (this) {
             for (Iterator<RealConnection> i = connections.iterator(); i.hasNext(); ) {
                 RealConnection connection = i.next();
 
-                // If the connection is in use, keep searching.
+                // If the connection is in use, keep searching.迭代集合，遇到正在使用的链接、continue，并计数
                 if (pruneAndGetAllocationCount(connection, now) > 0) {
                     inUseConnectionCount++;
                     continue;
@@ -210,7 +210,7 @@ public final class ConnectionPool {
 
                 idleConnectionCount++;
 
-                // If the connection is ready to be evicted, we're done.
+                // 为最长空闲链接和空闲时长赋值，找出空闲最长的链接
                 long idleDurationNs = now - connection.idleAtNanos;
                 if (idleDurationNs > longestIdleDurationNs) {
                     longestIdleDurationNs = idleDurationNs;
@@ -220,25 +220,24 @@ public final class ConnectionPool {
 
             if (longestIdleDurationNs >= this.keepAliveDurationNs
                     || idleConnectionCount > this.maxIdleConnections) {
-                // We've found a connection to evict. Remove it from the list, then close it below (outside
-                // of the synchronized block).
+                // 找到一个可以被清理的链接。从列表中移除它，然后在下边的同步块以外关闭它。
                 connections.remove(longestIdleConnection);
             } else if (idleConnectionCount > 0) {
-                // A connection will be ready to evict soon.
+                // 有空闲链接、返回到期可以被清理的时长
                 return keepAliveDurationNs - longestIdleDurationNs;
             } else if (inUseConnectionCount > 0) {
-                // All connections are in use. It'll be at least the keep alive duration 'til we run again.
+                // 所有链接都在使用，返回一个keepAliveDurationNs
                 return keepAliveDurationNs;
             } else {
-                // No connections, idle or in use.
+                // 没有链接，退出清理
                 cleanupRunning = false;
                 return -1;
             }
         }
 
-        closeQuietly(longestIdleConnection.socket());
+        closeQuietly(longestIdleConnection.socket());       // 关闭刚刚被清理的链接
 
-        // Cleanup again immediately.
+        // 立即开始下一次清理
         return 0;
     }
 
