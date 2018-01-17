@@ -10,7 +10,8 @@ import android.widget.Toast;
 public class SimpleRequestCallback implements IRequestCallback {
 
     private Context mContext;
-    public SimpleRequestCallback(Context context){
+
+    public SimpleRequestCallback(Context context) {
         mContext = context;
     }
 

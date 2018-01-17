@@ -3,8 +3,6 @@ package com.example.administrator.demox.net;
 import android.text.TextUtils;
 
 import java.io.IOException;
-import java.net.Proxy;
-import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
 import java.util.Map;
 

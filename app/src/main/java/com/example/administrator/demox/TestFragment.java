@@ -43,6 +43,7 @@ import okhttp3.OkHttpClient;
 @ContentView(R.layout.fragment_layout)
 public class TestFragment extends Fragment {
 
+    private static final String TEST_URL = "http://www.163.com/";
     final MyHandler mHandler = new MyHandler(this);
     @ViewInject(R.id.result)
     private TextView resultTV;
@@ -80,10 +81,8 @@ public class TestFragment extends Fragment {
 
     /**
      * 四个方法返回结果不相同
-     * 第一个方法 visitOkHttp() 返回的电脑端网站数据，其他三个是手机端数据
-     *
-     *
-     * **/
+     * 第一个方法返回了pc端的数据，其他三个方法返回的是手机端的数据，可能原因是user_agent的设置
+     **/
 
 
     @Event(R.id.ok_1)
@@ -92,36 +91,8 @@ public class TestFragment extends Fragment {
         new Thread() {
             @Override
             public void run() {
-
-                /*
-                String url = "http://www.163.com/";
-
-                OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                        .connectionPool(new ConnectionPool())       // 自定义参数
-                        .build();
-
-
-                Request request = new Request.Builder()
-                        .url(url)
-                        .build();
-
-                Call call = okHttpClient.newCall(request);
-
-                try {
-
-                    Response response = call.execute();
-
-
-                    // 得到结果
-                    Message msg = Message.obtain();
-                    msg.obj = response.body().string();
-                    mHandler.sendMessage(msg);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }*/
-
-
-                RequestFactory.getRequestManager().get("http://www.163.com/", new SimpleRequestCallback(getActivity()) {
+                // RequestFactory封装了请求操作，内部使用OkHttp3.5，但是是在主线程工作的
+                RequestFactory.getRequestManager().get(TEST_URL, new SimpleRequestCallback(getActivity()) {
                     @Override
                     public void onSucceed(String result) {
                         super.onSucceed(result);
@@ -138,7 +109,7 @@ public class TestFragment extends Fragment {
                 });
 
                 /*Map<String, String> params = new HashMap<>();
-                RequestFactory.getRequestManager().post("http://www.163.com/", params, new IRequestCallback() {
+                RequestFactory.getRequestManager().post(TEST_URL, params, new IRequestCallback() {
                     @Override
                     public void onNetError() {
 
@@ -173,7 +144,7 @@ public class TestFragment extends Fragment {
                     OkHttpClient okHttpClient = new OkHttpClient();
 //                    URL.setURLStreamHandlerFactory(okHttpClient);
 
-                    URL url = new URL("http://www.163.com/");
+                    URL url = new URL(TEST_URL);
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                     connection.setRequestMethod("GET");
 //                    connection.setRequestProperty("Connection", "close");
@@ -215,7 +186,7 @@ public class TestFragment extends Fragment {
     @Event(R.id.ok_3)
     private void visitByXUtils(View view) {
         Map<String, Object> map = new HashMap<>();
-        RequestParams params = new RequestParams("http://www.163.com/");
+        RequestParams params = new RequestParams(TEST_URL);
         if (null != map) {
             for (Map.Entry<String, Object> entry : map.entrySet()) {
                 params.addBodyParameter(entry.getKey(), (String) entry.getValue());
@@ -275,7 +246,7 @@ public class TestFragment extends Fragment {
     private void visitByOkGo(View view) {
         HttpParams params = new HttpParams();
 //        params.put("sign", "");
-        OkGo.<String>get("http://www.163.com/")
+        OkGo.<String>get(TEST_URL)
                 .tag(this)
                 .params(params)
                 .execute(new StringCallback() {

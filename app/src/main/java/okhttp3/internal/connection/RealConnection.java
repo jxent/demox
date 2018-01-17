@@ -63,7 +63,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static okhttp3.internal.Util.closeQuietly;
 
 public final class RealConnection extends Http2Connection.Listener implements Connection {
-    public final List<Reference<StreamAllocation>> allocations = new ArrayList<>();
+    public final List<Reference<StreamAllocation>> allocations = new ArrayList<>(); // 关联StreamAllocation, 用来统计在一个连接上建立了哪些流，通过StreamAllocation的acquire方法和release方法可以将一个allcation对象添加到链表或者移除链表
     private final Route route;
     /**
      * The application layer socket. Either an {@link SSLSocket} layered over {@link #rawSocket}, or
@@ -71,11 +71,11 @@ public final class RealConnection extends Http2Connection.Listener implements Co
      */
     public Socket socket;
     public volatile Http2Connection http2Connection;
-    public int successCount;
+    public int successCount;    // 成功的次数
     public BufferedSource source;
     public BufferedSink sink;
-    public int allocationLimit;
-    public boolean noNewStreams;
+    public int allocationLimit;     // 此链接可以承载最大并发流的限制，如果不超过限制，可以随意增加
+    public boolean noNewStreams;    // 可以简单理解为它表示该连接不可用。这个值一旦被设为true,则这个conncetion便不会再创建stream。
     public long idleAtNanos = Long.MAX_VALUE;
     /**
      * The low-level TCP socket.
@@ -111,7 +111,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
         // 连接开始
         while (protocol == null) {
             try {
-                if (route.requiresTunnel()) { // 如果要求隧道模式，建立通道连接，通常不是这种
+                if (route.requiresTunnel()) { // 如果要求隧道模式，建立隧道连接，通常不是这种
                     buildTunneledConnection(connectTimeout, readTimeout, writeTimeout,
                             connectionSpecSelector);
                 } else {  // 一般都走这条逻辑，建立socket连接
@@ -143,6 +143,9 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     /**
      * Does all the work to build an HTTPS connection over a proxy tunnel. The catch here is that a
      * proxy server can issue an auth challenge and then close the connection.
+     * 做构建一个使用代理的HTTPS链接的所有工作。这里的捕获可能是因为代理服务器遇到一个认证的问题，捕获到异常会关闭链接
+     * 使用的情况：
+     * 1.使用HTTP代理的HTTPS链接
      */
     private void buildTunneledConnection(int connectTimeout, int readTimeout, int writeTimeout,
                                          ConnectionSpecSelector connectionSpecSelector) throws IOException {
@@ -158,10 +161,10 @@ public final class RealConnection extends Http2Connection.Listener implements Co
             connectSocket(connectTimeout, readTimeout);
             tunnelRequest = createTunnel(readTimeout, writeTimeout, tunnelRequest, url);
 
-            if (tunnelRequest == null) break; // Tunnel successfully created.
+            if (tunnelRequest == null) break; // Tunnel successfully created. 隧道成功创建，退出循环
 
             // The proxy decided to close the connection after an auth challenge. We need to create a new
-            // connection, but this time with the auth credentials.
+            // connection, but this time with the auth credentials. 代理服务器产生身份怀疑觉得关闭当前链接，我们需要创建一个新的带身份证书的链接
             closeQuietly(rawSocket);
             rawSocket = null;
             sink = null;
@@ -174,6 +177,10 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     /**
      * Does all the work necessary to build a full HTTP or HTTPS connection on a raw socket.
      * 做构建一个完整的建立在raw socket基础上的HTTP和HTTPS连接的全部工作
+     * 三种使用raw socket的情况
+     * 1.无代理
+     * 2.明文的HTTP代理（HTTP代理的非HTTPS链接）
+     * 3.SOCKS代理
      */
     private void buildConnection(int connectTimeout, int readTimeout, int writeTimeout,
                                  ConnectionSpecSelector connectionSpecSelector) throws IOException {
@@ -185,14 +192,14 @@ public final class RealConnection extends Http2Connection.Listener implements Co
         Proxy proxy = route.proxy();
         Address address = route.address();
 
-        // 根据代理类型，选择socket的类型，是代理(HTTP、SOCKS)还是直连
+        // 根据代理类型，选择socket的类型，无代理或者HTTP代理使用SocketFactory，SOCKS代理new出一个socket对象
         rawSocket = proxy.type() == Proxy.Type.DIRECT || proxy.type() == Proxy.Type.HTTP
                 ? address.socketFactory().createSocket()
                 : new Socket(proxy);
 
         rawSocket.setSoTimeout(readTimeout);
         try {
-            Platform.get().connectSocket(rawSocket, route.socketAddress(), connectTimeout);
+            Platform.get().connectSocket(rawSocket, route.socketAddress(), connectTimeout);     // 完成特定于平台的连接建立，或判断运行的平台
         } catch (ConnectException e) {
             ConnectException ce = new ConnectException("Failed to connect to " + route.socketAddress());
             ce.initCause(e);
@@ -345,6 +352,8 @@ public final class RealConnection extends Http2Connection.Listener implements Co
      * Returns a request that creates a TLS tunnel via an HTTP proxy. Everything in the tunnel request
      * is sent unencrypted to the proxy server, so tunnels include only the minimum set of headers.
      * This avoids sending potentially sensitive data like HTTP cookies to the proxy unencrypted.
+     * 返回一个使用http代理的创建了TLS隧道的request。这个request上的数据被明文发送到代理服务器上，所以隧道只包含最小的请求头。
+     * 这样做避免了可能会发送敏感的明文数据（http cookies）到代理服务器的情况
      */
     private Request createTunnelRequest() {
         return new Request.Builder()
