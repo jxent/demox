@@ -153,7 +153,7 @@ public final class ConnectionPool {
      * been removed from the pool and should be closed.
      */
     boolean connectionBecameIdle(RealConnection connection) {
-        assert (Thread.holdsLock(this));
+        assert (Thread.holdsLock(this));        // 断言这段代码在锁里执行，如果不是会报错！
         if (connection.noNewStreams || maxIdleConnections == 0) {
             connections.remove(connection);
             return true;
@@ -164,7 +164,7 @@ public final class ConnectionPool {
     }
 
     /**
-     * Close and remove all idle connections in the pool.
+     * Close and remove all idle connections in the pool.关闭移除池中所有的空闲链接
      */
     public void evictAll() {
         List<RealConnection> evictedConnections = new ArrayList<>();
@@ -202,7 +202,7 @@ public final class ConnectionPool {
             for (Iterator<RealConnection> i = connections.iterator(); i.hasNext(); ) {
                 RealConnection connection = i.next();
 
-                // If the connection is in use, keep searching.迭代集合，遇到正在使用的链接、continue，并计数
+                // If the connection is in use, keep searching.迭代集合，如果链接正在被使用，continue，并计数
                 if (pruneAndGetAllocationCount(connection, now) > 0) {
                     inUseConnectionCount++;
                     continue;
@@ -229,7 +229,7 @@ public final class ConnectionPool {
                 // 所有链接都在使用，返回一个keepAliveDurationNs
                 return keepAliveDurationNs;
             } else {
-                // 没有链接，退出清理
+                // 没有链接，退出清理，标记位置空
                 cleanupRunning = false;
                 return -1;
             }
@@ -245,7 +245,7 @@ public final class ConnectionPool {
      * Prunes any leaked allocations and then returns the number of remaining live allocations on
      * {@code connection}. Allocations are leaked if the connection is tracking them but the
      * application code has abandoned them. Leak detection is imprecise and relies on garbage
-     * collection.
+     * collection. 删除泄露的分配并返回链接保持活着的分配的数量。链接依然在跟踪分配但是应用却抛弃了的分配被视为泄露的分配。泄露检查是不精确的并且依赖垃圾回收
      */
     private int pruneAndGetAllocationCount(RealConnection connection, long now) {
         List<Reference<StreamAllocation>> references = connection.allocations;
@@ -257,7 +257,7 @@ public final class ConnectionPool {
                 continue;
             }
 
-            // We've discovered a leaked allocation. This is an application bug.
+            // We've discovered a leaked allocation. This is an application bug. 应用bug可以导致链接被泄露
             StreamAllocation.StreamAllocationReference streamAllocRef =
                     (StreamAllocation.StreamAllocationReference) reference;
             String message = "A connection to " + connection.route().address().url()
@@ -267,9 +267,9 @@ public final class ConnectionPool {
             references.remove(i);
             connection.noNewStreams = true;
 
-            // If this was the last allocation, the connection is eligible for immediate eviction.
+            // If this was the last allocation, the connection is eligible for immediate eviction.如果是最后一个allocation，则此链接就可以被立即清除了
             if (references.isEmpty()) {
-                connection.idleAtNanos = now - keepAliveDurationNs;
+                connection.idleAtNanos = now - keepAliveDurationNs; // 在哪个时间点开始idle的
                 return 0;
             }
         }

@@ -41,14 +41,18 @@ dependencies {
     //    testImplementation 'junit:junit:4.12'
     //    androidTestImplementation 'com.android.support.test:runner:1.0.1'
     //    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
-    compile 'org.xutils:xutils:3.5.0'
+    implementation 'org.xutils:xutils:3.5.0'
 
-    compile 'com.lzy.net:okgo:3.0.4'
+    // 排除掉冲突的module、Multiple dex files define错误的解决
+    compile ('com.lzy.net:okgo:3.0.4'){
+        exclude module: 'okio'
+        exclude module: 'okhttp'
+    }
 //    compile 'com.squareup.leakcanary:leakcanary-android:1.4-beta2'
 //    compile 'com.squareup.okhttp:okhttp:1.5.0'
 
 //    compile 'com.squareup.okhttp3:okhttp:3.5.0'
 
     //    releaseCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.5.2'
-    compile 'org.jetbrains:annotations-java5:15.0'
+    implementation 'org.jetbrains:annotations-java5:15.0'
 }

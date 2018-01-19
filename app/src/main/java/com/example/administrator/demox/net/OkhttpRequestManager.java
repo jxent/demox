@@ -52,6 +52,7 @@ public class OkhttpRequestManager implements IRequestManager {
 //                .proxy(new Proxy(Proxy.Type.HTTP, null))  // 设置Http代理服务器
                 .build();
 
+        /* original request */
         Request request = new Request.Builder()
                 .url(url)
                 .method("GET", null)

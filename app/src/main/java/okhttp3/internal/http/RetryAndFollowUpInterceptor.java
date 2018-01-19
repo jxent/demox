@@ -103,6 +103,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
   @Override public Response intercept(Chain chain) throws IOException {
     Request request = chain.request();
 
+    // 在这里创建了StreamAllocation
     streamAllocation = new StreamAllocation(
         client.connectionPool(), createAddress(request.url()), callStackTrace);
 
