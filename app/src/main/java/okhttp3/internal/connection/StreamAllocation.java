@@ -35,7 +35,8 @@ import okhttp3.internal.http2.StreamResetException;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
- * This class coordinates the relationship between three entities:协调Connections、Streams和Calls三者的关系
+ * This class coordinates the relationship between three entities:
+ * 协调Connections、Streams和Calls三者的关系
  * <p>
  * <ul>
  * <li><strong>Connections:</strong> physical socket connections to remote servers. These are
@@ -98,7 +99,7 @@ public final class StreamAllocation {
         boolean connectionRetryEnabled = client.retryOnConnectionFailure();
 
         try {
-            // 返回一个健康的RealConnection对象
+            // 寻找并返回一个健康的RealConnection对象
             RealConnection resultConnection = findHealthyConnection(connectTimeout, readTimeout,
                     writeTimeout, connectionRetryEnabled, doExtensiveHealthChecks);
 
@@ -124,7 +125,7 @@ public final class StreamAllocation {
 
     /**
      * Finds a connection and returns it if it is healthy. If it is unhealthy the process is repeated
-     * until a healthy connection is found.
+     * until a healthy connection is found.循环找到一个合格的健康的链接
      */
     private RealConnection findHealthyConnection(int connectTimeout, int readTimeout,
                                                  int writeTimeout, boolean connectionRetryEnabled, boolean doExtensiveHealthChecks)
@@ -133,7 +134,7 @@ public final class StreamAllocation {
             RealConnection candidate = findConnection(connectTimeout, readTimeout, writeTimeout,
                     connectionRetryEnabled);
 
-            // If this is a brand new connection, we can skip the extensive health checks.
+            // If this is a brand new connection, we can skip the extensive health checks.如果这是个名牌（O(∩_∩)O~）的新connection，那么我们略过大量的健康检查
             synchronized (connectionPool) {
                 if (candidate.successCount == 0) {
                     return candidate;
@@ -154,7 +155,10 @@ public final class StreamAllocation {
     /**
      * Returns a connection to host a new stream. This prefers the existing connection if it exists,
      * then the pool, finally building a new connection.
-     * 返回一个connection（实际的流）关联一个新的stream（逻辑上的流），优先返回已经存在的，然后是池里的，最后都没有在new一个新的
+     * 返回一个connection（实际的流）关联一个新的stream（逻辑上的流），
+     * 1.优先返回已经存在的（刚刚从池中匹配或者刚刚new出来的额）
+     * 2.没有，再去链接池里匹配
+     * 3.最后都没有，再new一个新的
      */
     private RealConnection findConnection(int connectTimeout, int readTimeout, int writeTimeout,
                                           boolean connectionRetryEnabled) throws IOException {
@@ -164,6 +168,7 @@ public final class StreamAllocation {
             if (codec != null) throw new IllegalStateException("codec != null");
             if (canceled) throw new IOException("Canceled");
 
+            // 优先返回对象里已经存在的（this.connection）
             RealConnection allocatedConnection = this.connection;
             if (allocatedConnection != null && !allocatedConnection.noNewStreams) {
                 return allocatedConnection;
@@ -186,11 +191,12 @@ public final class StreamAllocation {
                 refusedStreamCount = 0;
             }
         }
+        // 最后都未成功，new一个新的RealConnection对象返回
         RealConnection newConnection = new RealConnection(selectedRoute);
 
         synchronized (connectionPool) {
-            acquire(newConnection);
-            Internal.instance.put(connectionPool, newConnection);   // 加入链接池
+            acquire(newConnection);     // 把这个类对象添加入newConnection的allocations中
+            Internal.instance.put(connectionPool, newConnection);   // 把newConnection放到链接池
             this.connection = newConnection;    // 赋值给类变量
             if (canceled) throw new IOException("Canceled");
         }
@@ -261,7 +267,7 @@ public final class StreamAllocation {
                     release(connection);
                     if (connection.allocations.isEmpty()) { // 分配为空，通知该链接已经变为idle状态，可以从连接池中移除
                         connection.idleAtNanos = System.nanoTime(); // 标记链接空闲的时刻
-                        if (Internal.instance.connectionBecameIdle(connectionPool, connection)) {
+                        if (Internal.instance.connectionBecameIdle(connectionPool, connection)) {   // 这个方法会唤醒wait的ConnectionPoll的cleanup线程
                             connectionToClose = connection;
                         }
                     }

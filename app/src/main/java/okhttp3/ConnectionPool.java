@@ -153,7 +153,7 @@ public final class ConnectionPool {
      * been removed from the pool and should be closed.
      */
     boolean connectionBecameIdle(RealConnection connection) {
-        assert (Thread.holdsLock(this));        // 断言这段代码在锁里执行，如果不是会报错！
+        assert (Thread.holdsLock(this));        // 断言这段代码是否被加锁ConnectionPool执行，如果不是会报错！
         if (connection.noNewStreams || maxIdleConnections == 0) {
             connections.remove(connection);
             return true;

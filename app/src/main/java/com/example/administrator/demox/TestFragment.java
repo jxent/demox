@@ -43,7 +43,9 @@ import okhttp3.OkHttpClient;
 @ContentView(R.layout.fragment_layout)
 public class TestFragment extends Fragment {
 
-    private static final String TEST_URL = "http://www.163.com/";
+    private static final String TEST_URL_HTTP = "http://www.163.com/";
+    private static final String TEST_URL_HTTPS = "https://www.baidu.com/";
+
     final MyHandler mHandler = new MyHandler(this);
     @ViewInject(R.id.result)
     private TextView resultTV;
@@ -92,7 +94,7 @@ public class TestFragment extends Fragment {
             @Override
             public void run() {
                 // RequestFactory封装了请求操作，内部使用OkHttp3.5，但是是在主线程工作的
-                RequestFactory.getRequestManager().get(TEST_URL, new SimpleRequestCallback(getActivity()) {
+                RequestFactory.getRequestManager().get(TEST_URL_HTTPS, new SimpleRequestCallback(getActivity()) {
                     @Override
                     public void onSucceed(String result) {
                         super.onSucceed(result);
@@ -109,7 +111,7 @@ public class TestFragment extends Fragment {
                 });
 
                 /*Map<String, String> params = new HashMap<>();
-                RequestFactory.getRequestManager().post(TEST_URL, params, new IRequestCallback() {
+                RequestFactory.getRequestManager().post(TEST_URL_HTTP, params, new IRequestCallback() {
                     @Override
                     public void onNetError() {
 
@@ -144,7 +146,7 @@ public class TestFragment extends Fragment {
                     OkHttpClient okHttpClient = new OkHttpClient();
 //                    URL.setURLStreamHandlerFactory(okHttpClient);
 
-                    URL url = new URL(TEST_URL);
+                    URL url = new URL(TEST_URL_HTTP);
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                     connection.setRequestMethod("GET");
 //                    connection.setRequestProperty("Connection", "close");
@@ -186,7 +188,7 @@ public class TestFragment extends Fragment {
     @Event(R.id.ok_3)
     private void visitByXUtils(View view) {
         Map<String, Object> map = new HashMap<>();
-        RequestParams params = new RequestParams(TEST_URL);
+        RequestParams params = new RequestParams(TEST_URL_HTTP);
         if (null != map) {
             for (Map.Entry<String, Object> entry : map.entrySet()) {
                 params.addBodyParameter(entry.getKey(), (String) entry.getValue());
@@ -246,7 +248,7 @@ public class TestFragment extends Fragment {
     private void visitByOkGo(View view) {
         HttpParams params = new HttpParams();
 //        params.put("sign", "");
-        OkGo.<String>get(TEST_URL)
+        OkGo.<String>get(TEST_URL_HTTP)
                 .tag(this)
                 .params(params)
                 .execute(new StringCallback() {

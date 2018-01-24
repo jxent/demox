@@ -3,8 +3,14 @@ package com.example.administrator.demox.net;
 import android.text.TextUtils;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
 import java.util.Map;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
 
 import okhttp3.Call;
 import okhttp3.ConnectionPool;
@@ -49,7 +55,13 @@ public class OkhttpRequestManager implements IRequestManager {
 
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
                 .connectionPool(new ConnectionPool())       // 自定义参数
-//                .proxy(new Proxy(Proxy.Type.HTTP, null))  // 设置Http代理服务器
+//                .proxy(new Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("10.0.1.84", 8888)))  // 设置Http代理服务器
+//                .hostnameVerifier(new HostnameVerifier() {      // 证书验证
+//                    @Override
+//                    public boolean verify(String hostname, SSLSession session) {
+//                        return true;
+//                    }
+//                })
                 .build();
 
         /* original request */
@@ -63,6 +75,7 @@ public class OkhttpRequestManager implements IRequestManager {
         try {
 
             Response response = call.execute();
+
             String result = response.body().string();
             if (!TextUtils.isEmpty(result)) {
                 requestCallback.onSucceed(result);

@@ -74,7 +74,7 @@ public final class Route {
     /**
      * Returns true if this route tunnels HTTPS through an HTTP proxy. See <a
      * href="http://www.ietf.org/rfc/rfc2817.txt">RFC 2817, Section 5.2</a>.
-     * 使用Http代理的HTTPS链接满足条件
+     * 使用Http代理的HTTPS链接满足使用"隧道tunnel"的条件
      */
     public boolean requiresTunnel() {
         return address.sslSocketFactory != null && proxy.type() == Proxy.Type.HTTP;

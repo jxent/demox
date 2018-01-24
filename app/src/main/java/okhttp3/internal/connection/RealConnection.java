@@ -199,7 +199,8 @@ public final class RealConnection extends Http2Connection.Listener implements Co
 
         rawSocket.setSoTimeout(readTimeout);
         try {
-            Platform.get().connectSocket(rawSocket, route.socketAddress(), connectTimeout);     // 完成特定于平台的连接建立，或判断运行的平台
+            // 完成特定于平台的连接建立，或判断运行的平台
+            Platform.get().connectSocket(rawSocket, route.socketAddress(), connectTimeout);
         } catch (ConnectException e) {
             ConnectException ce = new ConnectException("Failed to connect to " + route.socketAddress());
             ce.initCause(e);
@@ -298,6 +299,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     /**
      * To make an HTTPS connection over an HTTP proxy, send an unencrypted CONNECT request to create
      * the proxy connection. This may need to be retried if the proxy requires authorization.
+     * 在HTTP代理基础上建立一个HTTPS链接，发送未加密的连接请求来创建代理链接。如果代理服务器需要认证可能会retry。
      */
     private Request createTunnel(int readTimeout, int writeTimeout, Request tunnelRequest,
                                  HttpUrl url) throws IOException {
@@ -352,7 +354,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
      * Returns a request that creates a TLS tunnel via an HTTP proxy. Everything in the tunnel request
      * is sent unencrypted to the proxy server, so tunnels include only the minimum set of headers.
      * This avoids sending potentially sensitive data like HTTP cookies to the proxy unencrypted.
-     * 返回一个使用http代理的创建了TLS隧道的request。这个request上的数据被明文发送到代理服务器上，所以隧道只包含最小的请求头。
+     * 创建使用http代理的TLS隧道Request对象。这个Request上的数据被明文发送到代理服务器上，所以隧道只包含最小的请求头。
      * 这样做避免了可能会发送敏感的明文数据（http cookies）到代理服务器的情况
      */
     private Request createTunnelRequest() {

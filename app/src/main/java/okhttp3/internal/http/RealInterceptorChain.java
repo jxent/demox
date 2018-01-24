@@ -85,7 +85,7 @@ public final class RealInterceptorChain implements Interceptor.Chain {
                     + " must retain the same host and port");
         }
 
-        // If we already have a stream, confirm that this is the only call to chain.proceed(). 如果我们有流对象，请确保这是唯一的call在调用
+        // If we already have a stream, confirm that this is the only call to chain.proceed(). 如果我们有流对象，请确保这是唯一的chain.proceed()的调用（calls不能大于1，否则状态异常）
         if (this.httpCodec != null && calls > 1) {
             throw new IllegalStateException("network interceptor " + interceptors.get(index - 1)
                     + " must call proceed() exactly once");
