@@ -107,7 +107,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     public Response intercept(Chain chain) throws IOException {
         Request request = chain.request();
 
-        // 在这里创建了StreamAllocation
+        // 在这里创建了StreamAllocation对象
         streamAllocation = new StreamAllocation(
                 client.connectionPool(), createAddress(request.url()), callStackTrace);
 
@@ -185,6 +185,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
                         + " didn't close its backing stream. Bad interceptor?");
             }
 
+            // 走到这里说明需要被retry
             request = followUp;
             priorResponse = response;
         }
