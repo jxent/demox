@@ -1,5 +1,9 @@
 # 安卓网络请求探索
-OkHttpClient3.5.0源码、HttpURLConnection、XUtils、OkGo
+
+OkHttpClient3.5.0源码
+HttpURLConnection(okHttpClient1.5.0)
+XUtils
+OkGo
 
 参考博客
 https://www.jianshu.com/p/6637369d02e7
