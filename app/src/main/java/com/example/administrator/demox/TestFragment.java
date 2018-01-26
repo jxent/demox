@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.example.administrator.demox.net.IRequestCallback;
 import com.example.administrator.demox.net.RequestFactory;
 import com.example.administrator.demox.net.SimpleRequestCallback;
 import com.lzy.okgo.OkGo;
@@ -94,7 +95,7 @@ public class TestFragment extends Fragment {
             @Override
             public void run() {
                 // RequestFactory封装了请求操作，内部使用OkHttp3.5，但是是在主线程工作的
-                RequestFactory.getRequestManager().get(TEST_URL_HTTPS, new SimpleRequestCallback(getActivity()) {
+                /*RequestFactory.getRequestManager().get(TEST_URL_HTTPS, new SimpleRequestCallback(getActivity()) {
                     @Override
                     public void onSucceed(String result) {
                         super.onSucceed(result);
@@ -108,10 +109,13 @@ public class TestFragment extends Fragment {
                     public void onFailure(Throwable throwable) {
                         super.onFailure(throwable);
                     }
-                });
+                });*/
 
-                /*Map<String, String> params = new HashMap<>();
-                RequestFactory.getRequestManager().post(TEST_URL_HTTP, params, new IRequestCallback() {
+                String TEST_URL = "http://api.vbrosfitness.com/act/pay/checkAppVersion/";
+                Map<String, String> params = new HashMap<>();
+                params.put("versionCode", "1");
+                params.put("txt", "apk");
+                RequestFactory.getRequestManager().post(TEST_URL, params, new IRequestCallback() {
                     @Override
                     public void onNetError() {
 
@@ -126,9 +130,9 @@ public class TestFragment extends Fragment {
 
                     @Override
                     public void onFailure(Throwable throwable) {
-
+                        Log.e("jason", throwable.getMessage());
                     }
-                });*/
+                });
             }
         }.start();
     }
