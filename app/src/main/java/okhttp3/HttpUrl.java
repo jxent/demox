@@ -1326,6 +1326,7 @@ public final class HttpUrl {
         pos += slashCount;
         authority:
         while (true) {
+          // 按定界符 "@/\\?#" 分段处理
           int componentDelimiterOffset = delimiterOffset(input, pos, limit, "@/\\?#");
           int c = componentDelimiterOffset != limit
               ? input.charAt(componentDelimiterOffset)
@@ -1520,7 +1521,7 @@ public final class HttpUrl {
       return -1; // No ':'; doesn't start with a scheme.
     }
 
-    /** Returns the number of '/' and '\' slashes in {@code input}, starting at {@code pos}. */
+    /** Returns the number of '/' and '\' slashes in {@code input}, starting at {@code pos}. 返回正反斜杠的数量*/
     private static int slashCount(String input, int pos, int limit) {
       int slashCount = 0;
       while (pos < limit) {
@@ -1535,7 +1536,8 @@ public final class HttpUrl {
       return slashCount;
     }
 
-    /** Finds the first ':' in {@code input}, skipping characters between square braces "[...]". */
+    /** Finds the first ':' in {@code input}, skipping characters between square braces "[...]".
+     * 查找input中的第一个出现的“：”，跳过中括号中的字符 */
     private static int portColonOffset(String input, int pos, int limit) {
       for (int i = pos; i < limit; i++) {
         switch (input.charAt(i)) {
@@ -1545,10 +1547,10 @@ public final class HttpUrl {
             }
             break;
           case ':':
-            return i;
+            return i;// 返回出现的位置
         }
       }
-      return limit; // No colon.
+      return limit; // 没有“：”
     }
 
     private static String canonicalizeHost(String input, int pos, int limit) {

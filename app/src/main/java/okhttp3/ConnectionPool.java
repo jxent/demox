@@ -103,7 +103,7 @@ public final class ConnectionPool {
     }
 
     /**
-     * Returns the number of idle connections in the pool.
+     * 返回池中空闲connection的个数
      */
     public synchronized int idleConnectionCount() {
         int total = 0;

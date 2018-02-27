@@ -276,6 +276,7 @@ public final class Util {
   /**
    * Increments {@code pos} until {@code input[pos]} is not ASCII whitespace. Stops at {@code
    * limit}.
+   * 返回input中不为ASCII whitespace的开始位置
    */
   public static int skipLeadingAsciiWhitespace(String input, int pos, int limit) {
     for (int i = pos; i < limit; i++) {
@@ -295,7 +296,7 @@ public final class Util {
 
   /**
    * Decrements {@code limit} until {@code input[limit - 1]} is not ASCII whitespace. Stops at
-   * {@code pos}.
+   * {@code pos}.倒数不为 ASCII whitespace 的位置
    */
   public static int skipTrailingAsciiWhitespace(String input, int pos, int limit) {
     for (int i = limit - 1; i >= pos; i--) {
@@ -323,6 +324,7 @@ public final class Util {
   /**
    * Returns the index of the first character in {@code input} that contains a character in {@code
    * delimiters}. Returns limit if there is no such character.
+   * 返回与参数delimiters中任一字符匹配这个字符的位置
    */
   public static int delimiterOffset(String input, int pos, int limit, String delimiters) {
     for (int i = pos; i < limit; i++) {
