@@ -95,6 +95,8 @@ public class OkhttpRequestManager implements IRequestManager {
                 }
             });*/
 
+
+            /**取得请求响应的结果**/
             String result = response.body().string();
             if (!TextUtils.isEmpty(result)) {
                 requestCallback.onSucceed(result);
@@ -104,7 +106,7 @@ public class OkhttpRequestManager implements IRequestManager {
 
         } catch (SocketTimeoutException e) {
 
-            requestCallback.onNetError();   // 连接出现超时错误
+            requestCallback.onNetError(e);   // 连接出现超时错误
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -149,7 +151,7 @@ public class OkhttpRequestManager implements IRequestManager {
 
         } catch (SocketTimeoutException e) {
 
-            requestCallback.onNetError();   // 连接出现超时错误
+            requestCallback.onNetError(e);   // 连接出现超时错误
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -163,6 +165,11 @@ public class OkhttpRequestManager implements IRequestManager {
 
     @Override
     public void delete(String url, IRequestCallback requestCallback) {
+
+    }
+
+    @Override
+    public void download(String url, IRequestCallback requestCallback) {
 
     }
 }

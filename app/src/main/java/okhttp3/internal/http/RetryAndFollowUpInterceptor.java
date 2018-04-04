@@ -111,8 +111,10 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
         streamAllocation = new StreamAllocation(
                 client.connectionPool(), createAddress(request.url()), callStackTrace);
 
-        int followUpCount = 0;
-        Response priorResponse = null;
+        int followUpCount = 0;  // 记录次数
+        Response priorResponse = null;  // 会失败并且retry或者重定向，记录先前的response对象
+
+        // 这里是个死循环，多次retry或者follow up
         while (true) {
             if (canceled) {
                 streamAllocation.release();
@@ -122,6 +124,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
             Response response = null;
             boolean releaseConnection = true;
             try {
+                /** 继续后续的链式调用，直到跟服务器产生交互，并返回response，然后如果捕获到异常，那么就是需要retry或者重定向请求了 **/
                 response = ((RealInterceptorChain) chain).proceed(request, streamAllocation, null, null);
                 releaseConnection = false;
             } catch (RouteException e) {        // 路由异常，请求还没有被发送出去，continue while 循环
@@ -138,7 +141,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
                 releaseConnection = false;
                 continue;
             } finally {
-                // We're throwing an unchecked exception. Release any resources.
+                // 抛出一个未catch的异常，释放所有资源。
                 if (releaseConnection) {
                     streamAllocation.streamFailed(null);
                     streamAllocation.release();
@@ -146,6 +149,8 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
             }
 
             // Attach the prior response if it exists. Such responses never have a body.
+            // 关联之前的response，如果有的话，这些response绝不会有response body，只有response header，
+            // 如果response body不为null，会在priorResponse内部抛出异常
             if (priorResponse != null) {
                 response = response.newBuilder()
                         .priorResponse(priorResponse.newBuilder()
@@ -154,7 +159,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
                         .build();
             }
 
-            // 判断响应是否需要重定向
+            // 判断响应是否需要重定向，301资源被永久移动到新url，请访问新url；302资源暂时不可用，请访问新url
             Request followUp = followUpRequest(response);
 
             if (followUp == null) {
@@ -268,6 +273,9 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
      * Figures out the HTTP request to make in response to receiving {@code userResponse}. This will
      * either add authentication headers, follow redirects or handle a client request timeout. If a
      * follow-up is either unnecessary or not applicable, this returns null.
+     *
+     * 这个userResponse是失败的上一次request的response，这个方法是从中取得一些header，如果follow-up不重要，
+     * 或者不可用，这个方法回返回null
      */
     private Request followUpRequest(Response userResponse) throws IOException {
         if (userResponse == null) throw new IllegalStateException();
@@ -278,6 +286,18 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
         int responseCode = userResponse.code();
 
         final String method = userResponse.request().method();
+
+        /** 根据userResponse的响应码，做出相应的操作
+         *  407 需要代理身份验证，需要登录到代理服务器，然后重试
+         *  401 多种原因引起的未授权（https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html）
+         *  308 永久重定向
+         *  307 临时重定向
+         *  300 多种选择
+         *  301 永久移动到新的url
+         *  302 暂时移动到新的url
+         *  303 对该请求的响应可以通过访问一个新url获取，访问方法应当为get。。。
+         *  408 在服务器准备等待的时间内，客户端没有产生一个请求。客户端可以在稍后不需要修改请求再次访问
+         */
         switch (responseCode) {
             case HTTP_PROXY_AUTH:   // 407
                 Proxy selectedProxy = route != null
@@ -303,14 +323,14 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
             case HTTP_MOVED_PERM:       // 301
             case HTTP_MOVED_TEMP:       // 302
             case HTTP_SEE_OTHER:        // 303
-                // Does the client allow redirects?
+                // OkHttpClient已禁止重定向
                 if (!client.followRedirects()) return null;
 
                 String location = userResponse.header("Location");
                 if (location == null) return null;
                 HttpUrl url = userResponse.request().url().resolve(location);
 
-                // Don't follow redirects to unsupported protocols.
+                // Location字段为空，或者其不是一个被支持的HttpUrl，返回null
                 if (url == null) return null;
 
                 // If configured, don't follow redirects between SSL and non-SSL.
@@ -343,7 +363,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
 
                 return requestBuilder.url(url).build();
 
-            case HTTP_CLIENT_TIMEOUT:       // 408 请求出现超时
+            case HTTP_CLIENT_TIMEOUT:       // 408 请求出现超时，服务器已准备就绪，客户端超时
                 // 408's are rare in practice, but some servers like HAProxy use this response code. The
                 // spec says that we may repeat the request without modifications. Modern browsers also
                 // repeat the request (even non-idempotent ones.)
@@ -351,7 +371,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
                     return null;
                 }
 
-                return userResponse.request();
+                return userResponse.request();  // 无需任何修改，再次请求
 
             default:
                 return null;

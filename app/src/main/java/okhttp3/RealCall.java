@@ -58,7 +58,7 @@ final class RealCall implements Call {
 
     @Override
     public Response execute() throws IOException {
-        synchronized (this) {
+        synchronized (this) {   // 同步判断，如果这个call已经被execute了，抛出异常
             if (executed) throw new IllegalStateException("Already Executed");
             executed = true;
         }

@@ -66,7 +66,8 @@ public class TestFragment extends Fragment {
 
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
         View root = x.view().inject(this, inflater, container);
         ok1.setText("OkHttp3.5.0");
         ok2.setText("HttpURLConnection");
@@ -86,16 +87,17 @@ public class TestFragment extends Fragment {
      * 四个方法返回结果不相同
      * 第一个方法返回了pc端的数据，其他三个方法返回的是手机端的数据，可能原因是user_agent的设置
      **/
-
-
     @Event(R.id.ok_1)
     private void visitOkHttp(View view) {
 
         new Thread() {
             @Override
             public void run() {
-                // RequestFactory封装了请求操作，内部使用OkHttp3.5，但是是在主线程工作的
-                /*RequestFactory.getRequestManager().get(TEST_URL_HTTPS, new SimpleRequestCallback(getActivity()) {
+                /**RequestFactory封装了请求操作，内部使用OkHttp3.5，但是是在主线程工作的**/
+
+                // get
+                /*RequestFactory.getRequestManager().get(TEST_URL_HTTPS, new
+                SimpleRequestCallback(getActivity()) {
                     @Override
                     public void onSucceed(String result) {
                         super.onSucceed(result);
@@ -111,28 +113,31 @@ public class TestFragment extends Fragment {
                     }
                 });*/
 
+                // post
                 String TEST_URL = "http://api.vbrosfitness.com/act/pay/checkAppVersion/";
                 Map<String, String> params = new HashMap<>();
                 params.put("versionCode", "1");
                 params.put("txt", "apk");
-                RequestFactory.getRequestManager().post(TEST_URL, params, new IRequestCallback() {
-                    @Override
-                    public void onNetError() {
+                RequestFactory.getRequestManager().post(TEST_URL, params, new
+                        IRequestCallback() {
 
-                    }
+                            @Override
+                            public void onNetError(Throwable th) {
 
-                    @Override
-                    public void onSucceed(String result) {
-                        Message msg = Message.obtain();
-                        msg.obj = result;
-                        mHandler.sendMessage(msg);
-                    }
+                            }
 
-                    @Override
-                    public void onFailure(Throwable throwable) {
-                        Log.e("jason", throwable.getMessage());
-                    }
-                });
+                            @Override
+                            public void onSucceed(String result) {
+                                Message msg = Message.obtain();
+                                msg.obj = result;
+                                mHandler.sendMessage(msg);
+                            }
+
+                            @Override
+                            public void onFailure(Throwable throwable) {
+                                Log.e("jason", throwable.getMessage());
+                            }
+                        });
             }
         }.start();
     }
@@ -252,23 +257,21 @@ public class TestFragment extends Fragment {
     private void visitByOkGo(View view) {
         HttpParams params = new HttpParams();
 //        params.put("sign", "");
-        OkGo.<String>get(TEST_URL_HTTP)
-                .tag(this)
-                .params(params)
-                .execute(new StringCallback() {
+        OkGo.<String>get(TEST_URL_HTTP).tag(this).params(params).execute(new StringCallback() {
 
-                    @Override
-                    public void onSuccess(com.lzy.okgo.model.Response<String> response) {
-                        Message msg = Message.obtain();
-                        msg.obj = response.body().toString();
-                        Headers headers = response.headers();
-                        for (int i = 0; i < headers.names().size(); i++) {
-                            Log.e("jason", headers.name(i) + " ----------------- " + headers.get(headers.name(i)));
-                        }
+            @Override
+            public void onSuccess(com.lzy.okgo.model.Response<String> response) {
+                Message msg = Message.obtain();
+                msg.obj = response.body().toString();
+                Headers headers = response.headers();
+                for (int i = 0; i < headers.names().size(); i++) {
+                    Log.e("jason", headers.name(i) + " ----------------- " + headers.get
+                            (headers.name(i)));
+                }
 
-                        mHandler.sendMessage(msg);
-                    }
-                });
+                mHandler.sendMessage(msg);
+            }
+        });
     }
 
 

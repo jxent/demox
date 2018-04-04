@@ -48,6 +48,8 @@ public class BaseApp extends MultiDexApplication {
         return app.refWatcher;
     }*/
 
+
+    // 配置OkGo启动参数
     public void initOkGo(){
         //---------这里给出的是示例代码,告诉你可以这么传,实际使用的时候,根据需要传,不需要就不传-------------//
         HttpHeaders headers = new HttpHeaders();

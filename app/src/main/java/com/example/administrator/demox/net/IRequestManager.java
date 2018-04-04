@@ -15,4 +15,6 @@ public interface IRequestManager {
     void put(String url, IRequestCallback requestCallback);
 
     void delete(String url, IRequestCallback requestCallback);
+
+    void download(String url, IRequestCallback requestCallback);
 }

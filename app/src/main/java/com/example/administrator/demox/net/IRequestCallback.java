@@ -6,7 +6,7 @@ package com.example.administrator.demox.net;
 
 public interface IRequestCallback {
 
-    void onNetError();
+    void onNetError(Throwable th);
 
     void onSucceed(String result);
 

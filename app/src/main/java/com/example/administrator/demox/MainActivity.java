@@ -23,6 +23,7 @@ public class MainActivity extends AppCompatActivity {
 
         init();
 
+//        参考刘望舒博客 LeakThread的使用
 //        LeakThread leakThread = new LeakThread();
 //        leakThread.start();
 
