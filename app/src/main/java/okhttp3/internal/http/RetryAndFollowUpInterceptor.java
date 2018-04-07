@@ -190,7 +190,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
                         + " didn't close its backing stream. Bad interceptor?");
             }
 
-            // 走到这里说明需要被retry
+            // 走到这里，记录一下需要follow up的request和上次的response，它会在下一次循环中使用到
             request = followUp;
             priorResponse = response;
         }
@@ -274,7 +274,8 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
      * either add authentication headers, follow redirects or handle a client request timeout. If a
      * follow-up is either unnecessary or not applicable, this returns null.
      *
-     * 这个userResponse是失败的上一次request的response，这个方法是从中取得一些header，如果follow-up不重要，
+     * 这个userResponse是上一次失败的请求的response，这个方法即会添加一些认证头部和重定向信息，也会处理一些
+     * 客户端请求超时操作 。如果follow-up不重要，
      * 或者不可用，这个方法回返回null
      */
     private Request followUpRequest(Response userResponse) throws IOException {
@@ -287,7 +288,9 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
 
         final String method = userResponse.request().method();
 
-        /** 根据userResponse的响应码，做出相应的操作
+        /**
+         * 根据userResponse的响应码，生成重定向请求
+         *
          *  407 需要代理身份验证，需要登录到代理服务器，然后重试
          *  401 多种原因引起的未授权（https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html）
          *  308 永久重定向
@@ -381,6 +384,11 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     /**
      * Returns true if an HTTP request for {@code followUp} can reuse the connection used by this
      * engine.
+     * 如果这个Http重定向请求可以复用connections对象，返回true
+     * 可以复用的条件：
+     *      1.两次请求的host相同
+     *      2.两次请求的port相同
+     *      3.两次请求的scheme相同
      */
     private boolean sameConnection(Response response, HttpUrl followUp) {
         HttpUrl url = response.request().url();

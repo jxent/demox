@@ -16,8 +16,8 @@ public class SimpleRequestCallback implements IRequestCallback {
     }
 
     @Override
-    public void onNetError() {
-        Toast.makeText(mContext, "没有网络", Toast.LENGTH_SHORT).show();
+    public void onNetError(Throwable th) {
+        Toast.makeText(mContext, "net error: " + th.getMessage(), Toast.LENGTH_SHORT).show();
     }
 
     @Override

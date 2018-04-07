@@ -3,46 +3,35 @@ package com.example.administrator.demox.net;
 import android.text.TextUtils;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLSession;
-
 import okhttp3.Call;
-import okhttp3.Callback;
 import okhttp3.ConnectionPool;
 import okhttp3.FormBody;
-import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
-import okio.BufferedSink;
 
 /**
  * Created by Jason on 2018/1/11.
  */
 
-public class OkhttpRequestManager implements IRequestManager {
+public class OkHttpRequestManager implements IRequestManager {
 
-    private static OkhttpRequestManager instance;
+    private static OkHttpRequestManager instance;
     private static Object object = new Object();
 
-    private OkhttpRequestManager() {
+    private OkHttpRequestManager() {
 
     }
 
-    public static OkhttpRequestManager getInstance() {
+    public static OkHttpRequestManager getInstance() {
         if (instance == null) {
             synchronized (object) {
                 if (instance == null) {
-                    instance = new OkhttpRequestManager();
+                    instance = new OkHttpRequestManager();
                 }
             }
         }

@@ -23,7 +23,8 @@ import okhttp3.ResponseBody;
 import okio.Sink;
 
 /**
- * Encodes HTTP requests and decodes HTTP responses. 编码HTTP请求以及解码HTTP响应
+ * Encodes HTTP requests and decodes HTTP responses.
+ * 编码HTTP请求以及解码HTTP响应
  */
 public interface HttpCodec {
     /**

@@ -68,17 +68,19 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     /**
      * The application layer socket. Either an {@link SSLSocket} layered over {@link #rawSocket}, or
      * {@link #rawSocket} itself if this connection does not use SSL.
+     *
+     * 应用层socket，或者是在rawSocket层之上的SSLSocket对象，或者就是这个tcp层的rawSocket
      */
     public Socket socket;
     public volatile Http2Connection http2Connection;
     public int successCount;    // 成功的次数
-    public BufferedSource source;
+    public BufferedSource source;   // source sink 输入输出流
     public BufferedSink sink;
     public int allocationLimit;     // 此链接可以承载最大并发流的限制，如果不超过限制，可以随意增加
-    public boolean noNewStreams;    // 可以简单理解为它表示该连接不可用。这个值一旦被设为true,则这个conncetion便不会再创建stream。
+    public boolean noNewStreams;    // 可以简单理解为它表示该连接不可用。这个值一旦被设为true,则这个connection便不会再创建stream。
     public long idleAtNanos = Long.MAX_VALUE;
     /**
-     * The low-level TCP socket.
+     * The low-level TCP socket. Tcp层socket
      */
     private Socket rawSocket;
     private Handshake handshake;
@@ -88,15 +90,17 @@ public final class RealConnection extends Http2Connection.Listener implements Co
         this.route = route;
     }
 
+    /** 完成三次握手  **/
     public void connect(int connectTimeout, int readTimeout, int writeTimeout,
                         List<ConnectionSpec> connectionSpecs, boolean connectionRetryEnabled) {
+        // protocol不为空，说明这个connection已经connect过了，protocol在while循环中赋值
         if (protocol != null) throw new IllegalStateException("already connected");
 
         // 线路的选择
         RouteException routeException = null;
         ConnectionSpecSelector connectionSpecSelector = new ConnectionSpecSelector(connectionSpecs);
 
-        if (route.address().sslSocketFactory() == null) {
+        if (route.address().sslSocketFactory() == null) {   // CLEARTEXT 明文传输
             if (!connectionSpecs.contains(ConnectionSpec.CLEARTEXT)) {
                 throw new RouteException(new UnknownServiceException(
                         "CLEARTEXT communication not enabled for client"));
@@ -176,7 +180,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
 
     /**
      * Does all the work necessary to build a full HTTP or HTTPS connection on a raw socket.
-     * 做构建一个完整的建立在raw socket基础上的HTTP和HTTPS连接的全部工作
+     * 完成构建一个完整的建立在raw socket基础上的HTTP和HTTPS连接的全部工作
      * 三种使用raw socket的情况
      * 1.无代理
      * 2.明文的HTTP代理（HTTP代理的非HTTPS链接）
@@ -192,12 +196,13 @@ public final class RealConnection extends Http2Connection.Listener implements Co
         Proxy proxy = route.proxy();
         Address address = route.address();
 
-        // 根据代理类型，选择socket的类型，无代理或者HTTP代理使用SocketFactory，SOCKS代理new出一个socket对象
+        // 根据代理类型，选择socket的类型，无代理或者HTTP代理使用SocketFactory的createSocket()，其他情况
+        // （SOCKS代理）new出一个socket对象，把proxy作为参数
         rawSocket = proxy.type() == Proxy.Type.DIRECT || proxy.type() == Proxy.Type.HTTP
                 ? address.socketFactory().createSocket()
                 : new Socket(proxy);
 
-        rawSocket.setSoTimeout(readTimeout);
+        rawSocket.setSoTimeout(readTimeout);    // socket option time out
         try {
             // 完成特定于平台的连接建立，或判断运行的平台
             Platform.get().connectSocket(rawSocket, route.socketAddress(), connectTimeout);

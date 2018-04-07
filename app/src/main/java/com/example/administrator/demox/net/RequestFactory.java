@@ -8,6 +8,6 @@ package com.example.administrator.demox.net;
 public class RequestFactory {
 
     public static IRequestManager getRequestManager(){
-        return OkhttpRequestManager.getInstance();
+        return OkHttpRequestManager.getInstance();
     }
 }

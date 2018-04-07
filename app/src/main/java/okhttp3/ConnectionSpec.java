@@ -64,20 +64,22 @@ public final class ConnectionSpec {
       CipherSuite.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
   };
 
-  /** A modern TLS connection with extensions like SNI and ALPN available. */
+  /** A modern TLS connection with extensions like SNI and ALPN available.
+   * 更为现代的TLS链接，可以使用SNI或者ALPN这些扩展 */
   public static final ConnectionSpec MODERN_TLS = new Builder(true)
       .cipherSuites(APPROVED_CIPHER_SUITES)
       .tlsVersions(TlsVersion.TLS_1_3, TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0)
       .supportsTlsExtensions(true)
       .build();
 
-  /** A backwards-compatible fallback connection for interop with obsolete servers. */
+  /** A backwards-compatible fallback connection for interop with obsolete servers.
+   *  为了向后兼容的过时了的服务器的链接，保证其互操作性*/
   public static final ConnectionSpec COMPATIBLE_TLS = new Builder(MODERN_TLS)
       .tlsVersions(TlsVersion.TLS_1_0)
       .supportsTlsExtensions(true)
       .build();
 
-  /** Unencrypted, unauthenticated connections for {@code http:} URLs. */
+  /** Unencrypted, unauthenticated connections for {@code http:} URLs. 没有加密、没有身份验证的链接*/
   public static final ConnectionSpec CLEARTEXT = new Builder(false).build();
 
   final boolean tls;

@@ -125,10 +125,12 @@ public final class StreamAllocation {
 
     /**
      * Finds a connection and returns it if it is healthy. If it is unhealthy the process is repeated
-     * until a healthy connection is found.循环找到一个合格的健康的链接
+     * until a healthy connection is found.
+     * 循环找到一个合格的健康的链接
      */
     private RealConnection findHealthyConnection(int connectTimeout, int readTimeout,
-                                                 int writeTimeout, boolean connectionRetryEnabled, boolean doExtensiveHealthChecks)
+                                                 int writeTimeout, boolean connectionRetryEnabled,
+                                                 boolean doExtensiveHealthChecks)
             throws IOException {
         while (true) {
             RealConnection candidate = findConnection(connectTimeout, readTimeout, writeTimeout,
@@ -143,6 +145,7 @@ public final class StreamAllocation {
 
             // Do a (potentially slow) check to confirm that the pooled connection is still good. If it
             // isn't, take it out of the pool and start again.
+            // （潜在的延迟的可能）再次检查确认这个connection是否合格。如果不是从池中删掉然后继续。。。
             if (!candidate.isHealthy(doExtensiveHealthChecks)) {
                 noNewStreams();
                 continue;
@@ -156,7 +159,7 @@ public final class StreamAllocation {
      * Returns a connection to host a new stream. This prefers the existing connection if it exists,
      * then the pool, finally building a new connection.
      * 返回一个connection（实际的流）关联一个新的stream（逻辑上的流），
-     * 1.优先返回已经存在的（刚刚从池中匹配或者刚刚new出来的额）
+     * 1.优先返回已经存在的（刚刚从池中匹配或者刚刚new出来的）
      * 2.没有，再去链接池里匹配
      * 3.最后都没有，再new一个新的
      */
@@ -168,13 +171,13 @@ public final class StreamAllocation {
             if (codec != null) throw new IllegalStateException("codec != null");
             if (canceled) throw new IOException("Canceled");
 
-            // 优先返回对象里已经存在的（this.connection）
+            // 1. 优先考虑最近从连接池中返回的对象或新new的对象（在181行和201行）
             RealConnection allocatedConnection = this.connection;
             if (allocatedConnection != null && !allocatedConnection.noNewStreams) {
                 return allocatedConnection;
             }
 
-            // 尝试从链接池中返回一个
+            // 2. 尝试从链接池中返回一个
             RealConnection pooledConnection = Internal.instance.get(connectionPool, address, this);
             if (pooledConnection != null) {
                 this.connection = pooledConnection;
@@ -191,11 +194,11 @@ public final class StreamAllocation {
                 refusedStreamCount = 0;
             }
         }
-        // 最后都未成功，new一个新的RealConnection对象返回
+        // 1、2的操作都未成功，new一个新的RealConnection对象返回
         RealConnection newConnection = new RealConnection(selectedRoute);
 
         synchronized (connectionPool) {
-            acquire(newConnection);     // 把这个类对象添加入newConnection的allocations中
+            acquire(newConnection);     // 把这个类对象添加入刚new出来的newConnection的allocations中
             Internal.instance.put(connectionPool, newConnection);   // 把newConnection放到链接池
             this.connection = newConnection;    // 赋值给类变量
             if (canceled) throw new IOException("Canceled");
@@ -265,9 +268,13 @@ public final class StreamAllocation {
                 }
                 if (this.codec == null && (this.released || connection.noNewStreams)) {
                     release(connection);
-                    if (connection.allocations.isEmpty()) { // 分配为空，通知该链接已经变为idle状态，可以从连接池中移除
+                    // fixme > 移除完this之后，判断一下这个connection所关联的StreamAllocation列表是否为空，
+                    // fixme > 如果已经为空，则表明这个connection已经无事可做了，idle了，可以从connection
+                    // fixme > pool中移除了
+                    if (connection.allocations.isEmpty()) {
                         connection.idleAtNanos = System.nanoTime(); // 标记链接空闲的时刻
-                        if (Internal.instance.connectionBecameIdle(connectionPool, connection)) {   // 这个方法会唤醒wait的ConnectionPoll的cleanup线程
+                        // 这个方法会唤醒正在wait中的connection poll的cleanup线程，并执行clean up
+                        if (Internal.instance.connectionBecameIdle(connectionPool, connection)) {
                             connectionToClose = connection;
                         }
                     }
@@ -330,7 +337,9 @@ public final class StreamAllocation {
     /**
      * Use this allocation to hold {@code connection}. Each call to this must be paired with a call to
      * {@link #release} on the same connection.
-     * 使用这个allocation去host 一个connection。fixme ： 每一个acquire这个allocation的call 必须有配对的一个call release了这个allocation在同一个connection上。
+     * 使用这个allocation去hold这个connection。
+     * fixme ： 每一个acquire这个allocation的call 必须有配对的一个call
+     * release了这个allocation在同一个connection上。
      */
     public void acquire(RealConnection connection) {
         assert (Thread.holdsLock(connectionPool));
@@ -339,7 +348,7 @@ public final class StreamAllocation {
 
     /**
      * Remove this allocation from the connection's list of allocations.
-     * 从connection的allocation的list中移除这个allocation
+     * 从connection的stream allocation列表中移除 this
      */
     private void release(RealConnection connection) {
         for (int i = 0, size = connection.allocations.size(); i < size; i++) {

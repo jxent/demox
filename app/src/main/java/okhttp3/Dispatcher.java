@@ -132,7 +132,7 @@ public final class Dispatcher {
         if (runningAsyncCalls.size() < maxRequests && runningCallsForHost(call) < maxRequestsPerHost) {
             runningAsyncCalls.add(call);
             executorService().execute(call);
-        } else {
+        } else {        // 如果当前队列中总共未执行的元素、或者同一个host的未执行的元素超出最大配额，等待
             readyAsyncCalls.add(call);
         }
     }
