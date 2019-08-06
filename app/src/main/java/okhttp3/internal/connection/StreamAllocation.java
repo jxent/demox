@@ -244,6 +244,7 @@ public final class StreamAllocation {
 
     /**
      * Forbid new streams from being created on the connection that hosts this allocation.
+     * 禁止持有这个allocation的connection创建新的streams对象
      */
     public void noNewStreams() {
         deallocate(true, false, false);
@@ -252,6 +253,8 @@ public final class StreamAllocation {
     /**
      * Releases resources held by this allocation. If sufficient resources are allocated, the
      * connection will be detached or closed.
+     * 释放此allocation所持有的资源。如果释放出足够多的资源，这个连接就会被卸载或者关闭
+     * todo “卸载或关闭”不理解
      */
     private void deallocate(boolean noNewStreams, boolean released, boolean streamFinished) {
         RealConnection connectionToClose = null;

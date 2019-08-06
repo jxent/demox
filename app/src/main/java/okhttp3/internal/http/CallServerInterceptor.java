@@ -55,7 +55,8 @@ public final class CallServerInterceptor implements Interceptor {
             bufferedRequestBody.close();
         }
 
-        httpCodec.finishRequest();      // flush buffered
+        // 将缓存中的数据全部写入流中
+        httpCodec.finishRequest();
 
         // 读取响应
         Response response = httpCodec.readResponseHeaders()
@@ -77,6 +78,7 @@ public final class CallServerInterceptor implements Interceptor {
                     .build();
         }
 
+        // 客户端和服务器都有可能主动关闭连接（"Connection":"close"）
         if ("close".equalsIgnoreCase(response.request().header("Connection"))
                 || "close".equalsIgnoreCase(response.header("Connection"))) {
             streamAllocation.noNewStreams();

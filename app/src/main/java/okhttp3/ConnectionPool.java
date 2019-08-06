@@ -139,6 +139,10 @@ public final class ConnectionPool {
         return null;
     }
 
+    /**
+     * 放入连接池
+     * @param connection 连接对象
+     */
     void put(RealConnection connection) {
         assert (Thread.holdsLock(this));
         if (!cleanupRunning) {
@@ -199,10 +203,12 @@ public final class ConnectionPool {
 
         // Find either a connection to evict, or the time that the next eviction is due. 查找出一个可以被清理的链接并清理或者返回一个下次执行的间隔时长
         synchronized (this) {
+            // 遍历队列中的连接对象，并标记不活跃、空闲的连接（泄露连接）
             for (Iterator<RealConnection> i = connections.iterator(); i.hasNext(); ) {
                 RealConnection connection = i.next();
 
-                // If the connection is in use, keep searching.迭代集合，如果链接正在被使用，continue，并计数
+                // If the connection is in use, keep searching.
+                // 迭代connection的StreamAllocation集合，如果链接正在被使用，continue，并计数
                 if (pruneAndGetAllocationCount(connection, now) > 0) {
                     inUseConnectionCount++;
                     continue;
@@ -245,7 +251,9 @@ public final class ConnectionPool {
      * Prunes any leaked allocations and then returns the number of remaining live allocations on
      * {@code connection}. Allocations are leaked if the connection is tracking them but the
      * application code has abandoned them. Leak detection is imprecise and relies on garbage
-     * collection. 删除泄露的分配并返回链接保持活着的分配的数量。链接依然在跟踪分配但是应用却抛弃了的分配被视为泄露的分配。泄露检查是不精确的并且依赖垃圾回收
+     * collection.
+     * 删除泄露的分配并返回链接保持活着的分配的数量。链接依然在跟踪分配但是应用却抛弃了的分配被视为泄露的分配。
+     * 泄露检查是不精确的并且依赖垃圾回收
      */
     private int pruneAndGetAllocationCount(RealConnection connection, long now) {
         List<Reference<StreamAllocation>> references = connection.allocations;
@@ -257,7 +265,8 @@ public final class ConnectionPool {
                 continue;
             }
 
-            // We've discovered a leaked allocation. This is an application bug. 应用bug可以导致链接被泄露
+            // We've discovered a leaked allocation. This is an application bug.
+            // 应用bug可以导致链接被泄露
             StreamAllocation.StreamAllocationReference streamAllocRef =
                     (StreamAllocation.StreamAllocationReference) reference;
             String message = "A connection to " + connection.route().address().url()
@@ -267,13 +276,15 @@ public final class ConnectionPool {
             references.remove(i);
             connection.noNewStreams = true;
 
-            // If this was the last allocation, the connection is eligible for immediate eviction.如果是最后一个allocation，则此链接就可以被立即清除了
+            // If this was the last allocation, the connection is eligible for immediate eviction.
+            // 如果是最后一个allocation，则此链接就可以被立即清除了
             if (references.isEmpty()) {
                 connection.idleAtNanos = now - keepAliveDurationNs; // 在哪个时间点开始idle的
+                // 返回0，说明此连接已经没有被引用了
                 return 0;
             }
         }
-
+        // 否则返回引用数
         return references.size();
     }
 }
