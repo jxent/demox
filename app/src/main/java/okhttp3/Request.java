@@ -119,7 +119,9 @@ public final class Request {
         }
 
         public Builder url(HttpUrl url) {
-            if (url == null) throw new NullPointerException("url == null");
+            if (url == null) {
+                throw new NullPointerException("url == null");
+            }
             this.url = url;
             return this;
         }
@@ -133,15 +135,19 @@ public final class Request {
         public Builder url(String url) {
             if (url == null) throw new NullPointerException("url == null");
 
-            // Silently replace web socket URLs with HTTP URLs.把web socket url替换为http url
+            // Silently replace web socket URLs with HTTP URLs.
+            // 悄悄地把web socket url替换为http url。regionMatches模式比较
             if (url.regionMatches(true, 0, "ws:", 0, 3)) {
                 url = "http:" + url.substring(3);
             } else if (url.regionMatches(true, 0, "wss:", 0, 4)) {
                 url = "https:" + url.substring(4);
             }
 
+            // 将url构造为一个HttpUrl对象
             HttpUrl parsed = HttpUrl.parse(url);
-            if (parsed == null) throw new IllegalArgumentException("unexpected url: " + url);
+            if (parsed == null) {
+                throw new IllegalArgumentException("unexpected url: " + url);
+            }
             return url(parsed);
         }
 

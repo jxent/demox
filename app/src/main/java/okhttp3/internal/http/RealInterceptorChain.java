@@ -73,10 +73,12 @@ public final class RealInterceptorChain implements Interceptor.Chain {
 
     public Response proceed(Request request, StreamAllocation streamAllocation, HttpCodec httpCodec,
                             Connection connection) throws IOException {
+        // index代表拦截器的索引，不应该超过拦截器集合的大小
         if (index >= interceptors.size()) {
             throw new AssertionError();
         }
 
+        // 计数
         calls++;
 
         // If we already have a stream, confirm that the incoming request will use it.如果我们有了流对象，请确保即将到来的请求可以共用它
@@ -90,6 +92,14 @@ public final class RealInterceptorChain implements Interceptor.Chain {
             throw new IllegalStateException("network interceptor " + interceptors.get(index - 1)
                     + " must call proceed() exactly once");
         }
+
+        /**
+         * 拦截器的proceed方法中会new出一个新的Chain对象，并将最初设置的拦截器集合对象、streamAllocation对象、
+         * httpCodec对象以及connection对象继续向下传入，然后将index+1传入，最后将最初的request对象传入
+         *
+         * 这样做会在此处将下一个chain对象传入此处的interceptor中，并在interceptor执行拦截前逻辑后，执行chain的proceed方法，
+         * 方法如上重复，知道执行结束（todo 结束是怎么做的）
+         */
 
         // 调用拦截器链中的下一个拦截器
         RealInterceptorChain next = new RealInterceptorChain(

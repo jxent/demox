@@ -204,17 +204,31 @@ public final class Dispatcher {
         finished(runningSyncCalls, call, false);
     }
 
+    /**
+     * 此方法主要从队列中remove掉已经执行结束的call对象
+     * @param calls
+     * @param call
+     * @param promoteCalls
+     * @param <T>
+     */
     private <T> void finished(Deque<T> calls, T call, boolean promoteCalls) {
+        // 统计正在运行的call数量
         int runningCallsCount;
         Runnable idleCallback;
         synchronized (this) {
-            if (!calls.remove(call)) throw new AssertionError("Call wasn't in-flight!");
-            if (promoteCalls) promoteCalls();
+            if (!calls.remove(call)) {
+                // call 不在本次航班 ^_^， 断言错误 绝不允许出现 严重错误
+                throw new AssertionError("Call wasn't in-flight!");
+            }
+            if (promoteCalls) {
+                promoteCalls();
+            }
             runningCallsCount = runningCallsCount();
             idleCallback = this.idleCallback;
         }
 
         if (runningCallsCount == 0 && idleCallback != null) {
+            // 正在运行的call为0并且dispatcher的空闲回调被赋值了，则执行其回调
             idleCallback.run();
         }
     }
@@ -247,6 +261,7 @@ public final class Dispatcher {
     }
 
     public synchronized int runningCallsCount() {
+        // 统计同步和异步队列中的总数
         return runningAsyncCalls.size() + runningSyncCalls.size();
     }
 }

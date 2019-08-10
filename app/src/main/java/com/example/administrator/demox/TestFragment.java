@@ -44,7 +44,7 @@ import okhttp3.OkHttpClient;
 @ContentView(R.layout.fragment_layout)
 public class TestFragment extends Fragment {
 
-    private static final String TEST_URL_HTTP = "http://www.163.com/";
+    private static final String TEST_URL_HTTP = "http://httpbin.org/get";
     private static final String TEST_URL_HTTPS = "https://www.baidu.com/";
 
     final MyHandler mHandler = new MyHandler(this);

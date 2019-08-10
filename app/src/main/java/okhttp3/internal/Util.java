@@ -276,7 +276,8 @@ public final class Util {
   /**
    * Increments {@code pos} until {@code input[pos]} is not ASCII whitespace. Stops at {@code
    * limit}.
-   * 返回input中不为ASCII whitespace的开始位置
+   * 返回input中不为ASCII whitespace的开始位置，也就是input的第一个有效字符的位置
+   * 字符使用unicode编码系统，ascii部分是兼容的。
    */
   public static int skipLeadingAsciiWhitespace(String input, int pos, int limit) {
     for (int i = pos; i < limit; i++) {
@@ -296,7 +297,8 @@ public final class Util {
 
   /**
    * Decrements {@code limit} until {@code input[limit - 1]} is not ASCII whitespace. Stops at
-   * {@code pos}.倒数不为 ASCII whitespace 的位置
+   * {@code pos}.
+   * 倒数不为 ASCII whitespace 的位置
    */
   public static int skipTrailingAsciiWhitespace(String input, int pos, int limit) {
     for (int i = limit - 1; i >= pos; i--) {

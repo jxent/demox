@@ -55,4 +55,5 @@ dependencies {
 
     //    releaseCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.5.2'
     implementation 'org.jetbrains:annotations-java5:15.0'
+    testImplementation 'junit:junit:4.12'
 }

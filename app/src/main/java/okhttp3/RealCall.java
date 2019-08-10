@@ -37,6 +37,7 @@ final class RealCall implements Call {
 
     /**
      * The application's original request unadulterated by redirects or auth headers.
+     * 保留最原始的请求对象，没有被重定向或其他认证头污染过
      */
     final Request originalRequest;
     final boolean forWebSocket;
@@ -58,7 +59,8 @@ final class RealCall implements Call {
 
     @Override
     public Response execute() throws IOException {
-        synchronized (this) {   // 同步判断，如果这个call已经被execute了，抛出异常
+        synchronized (this) {
+            // 线程同步，重复调用此方法，抛出异常（一个call只能执行一次）
             if (executed) throw new IllegalStateException("Already Executed");
             executed = true;
         }
@@ -66,9 +68,12 @@ final class RealCall implements Call {
         try {
             client.dispatcher().executed(this);
             Response result = getResponseWithInterceptorChain();
-            if (result == null) throw new IOException("Canceled");
+            if (result == null) {
+                throw new IOException("Canceled");
+            }
             return result;
         } finally {
+            // 执行结束 无论发生什么 一定调用此方法
             client.dispatcher().finished(this);
         }
     }
@@ -128,8 +133,13 @@ final class RealCall implements Call {
         return originalRequest.url().redact();
     }
 
+    /**
+     * 给请求添加一系列的拦截器并启动拦截器
+     * @return
+     * @throws IOException
+     */
     Response getResponseWithInterceptorChain() throws IOException {
-        // 给请求添加一系列的拦截器
+
         List<Interceptor> interceptors = new ArrayList<>();
         interceptors.addAll(client.interceptors());
         interceptors.add(retryAndFollowUpInterceptor);
@@ -140,9 +150,11 @@ final class RealCall implements Call {
             interceptors.addAll(client.networkInterceptors());
         }
         interceptors.add(new CallServerInterceptor(forWebSocket));
+
         // 使用拦截器链依次有序地执行每一个拦截器，完成整个请求过程
         Interceptor.Chain chain = new RealInterceptorChain(
-                interceptors, null, null, null, 0, originalRequest);
+                interceptors, null, null,
+                null, 0, originalRequest);
         return chain.proceed(originalRequest);
     }
 

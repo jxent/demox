@@ -28,7 +28,8 @@ import okio.Source;
 public abstract class RequestBody {
     /**
      * Returns a new request body that transmits {@code content}. If {@code contentType} is non-null
-     * and lacks a charset, this will use UTF-8.返回一个传输内容的request body对象。如果contentType非空并且缺少一个字符集，缺省使用UTF-8
+     * and lacks a charset, this will use UTF-8.
+     * 构建一个请求体对象。如果contentType非空并且缺少一个字符集，缺省使用UTF-8
      */
     public static RequestBody create(MediaType contentType, String content) {
         Charset charset = Util.UTF_8;
