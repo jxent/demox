@@ -2,7 +2,6 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 26
-    buildToolsVersion "26.0.2"
     defaultConfig {
         applicationId "com.example.administrator.demox"
         minSdkVersion 19
@@ -44,7 +43,7 @@ dependencies {
     implementation 'org.xutils:xutils:3.5.0'
 
     // 排除掉冲突的module、Multiple dex files define错误的解决
-    compile ('com.lzy.net:okgo:3.0.4'){
+    implementation ('com.lzy.net:okgo:3.0.4'){
         exclude module: 'okio'
         exclude module: 'okhttp'
     }

@@ -81,39 +81,48 @@ public final class RealInterceptorChain implements Interceptor.Chain {
         // 计数
         calls++;
 
-        // If we already have a stream, confirm that the incoming request will use it.如果我们有了流对象，请确保即将到来的请求可以共用它
+        // If we already have a stream, confirm that the incoming request will use it.
+        // 如果我们有了流对象，请确保即将到来的请求可以共用它
         if (this.httpCodec != null && !sameConnection(request.url())) {
             throw new IllegalStateException("network interceptor " + interceptors.get(index - 1)
                     + " must retain the same host and port");
         }
 
-        // If we already have a stream, confirm that this is the only call to chain.proceed(). 如果我们有流对象，请确保这是唯一的chain.proceed()的调用（calls不能大于1，否则状态异常）
+        // If we already have a stream, confirm that this is the only call to chain.proceed().
+        // 如果我们有流对象，请确保这是唯一的chain.proceed()的调用（calls不能大于1，否则状态异常）
         if (this.httpCodec != null && calls > 1) {
             throw new IllegalStateException("network interceptor " + interceptors.get(index - 1)
                     + " must call proceed() exactly once");
         }
 
         /**
-         * 拦截器的proceed方法中会new出一个新的Chain对象，并将最初设置的拦截器集合对象、streamAllocation对象、
+         * 此处会new出一个新的Chain对象，并将最初设置的拦截器集合对象、streamAllocation对象、
          * httpCodec对象以及connection对象继续向下传入，然后将index+1传入，最后将最初的request对象传入
          *
-         * 这样做会在此处将下一个chain对象传入此处的interceptor中，并在interceptor执行拦截前逻辑后，执行chain的proceed方法，
-         * 方法如上重复，知道执行结束（todo 结束是怎么做的）
+         * 取出index处的拦截器对象，执行其intercept方法，上面new出的chain对象作为参数传入。在intercept方法执行期间
+         * 会执行入参chain的proceed方法，方法会类似递归的方式执行，直到CallServerInterceptor方法中不再执行proceed，
+         * 整个过程完成，并将Response对象一层一层返回。
          */
 
         // 调用拦截器链中的下一个拦截器
         RealInterceptorChain next = new RealInterceptorChain(
                 interceptors, streamAllocation, httpCodec, connection, index + 1, request);
         Interceptor interceptor = interceptors.get(index);
+        // 最终返回response对象
         Response response = interceptor.intercept(next);
 
         // Confirm that the next interceptor made its required call to chain.proceed().
+        /**
+         * ConnectInterceptor中创建了httpCodec对象，此处判断为了确保之后我们自定义添加的多个network interceptor
+         * 中的intercept方法必须调用了chain的proceed方法，并且每个方法必须只能调用一次
+         */
         if (httpCodec != null && index + 1 < interceptors.size() && next.calls != 1) {
             throw new IllegalStateException("network interceptor " + interceptor
                     + " must call proceed() exactly once");
         }
 
         // Confirm that the intercepted response isn't null.
+        // response不能是null，否则抛出在哪个interceptor中返回了null的空指针异常
         if (response == null) {
             throw new NullPointerException("interceptor " + interceptor + " returned null");
         }

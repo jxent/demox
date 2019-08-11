@@ -47,7 +47,7 @@ public class OkHttpTest {
     }
 
     @Test
-    public void jiba() {
+    public void testBreakLabel() {
 
         breakAll:
         while (true) {

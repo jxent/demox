@@ -185,6 +185,7 @@ public final class Dispatcher {
 
     /**
      * Used by {@code Call#execute} to signal it is in-flight.
+     * 登机成功
      */
     synchronized void executed(RealCall call) {
         runningSyncCalls.add(call);
