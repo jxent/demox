@@ -40,6 +40,9 @@ final class RealCall implements Call {
      * 保留最原始的请求对象，没有被重定向或其他认证头污染过
      */
     final Request originalRequest;
+    /**
+     * 是否是web socket，Android平台始终为false
+     */
     final boolean forWebSocket;
 
     // Guarded by this.
@@ -49,6 +52,7 @@ final class RealCall implements Call {
         this.client = client;
         this.originalRequest = originalRequest;
         this.forWebSocket = forWebSocket;
+        // 实例化call对象的“重试和跟踪拦截器”
         this.retryAndFollowUpInterceptor = new RetryAndFollowUpInterceptor(client, forWebSocket);
     }
 

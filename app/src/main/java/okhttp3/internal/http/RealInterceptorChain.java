@@ -36,6 +36,9 @@ public final class RealInterceptorChain implements Interceptor.Chain {
     private final Connection connection;
     private final int index;
     private final Request request;
+    /**
+     * 分别记录每个对象proceed方法被执行的次数
+     */
     private int calls;
 
     public RealInterceptorChain(List<Interceptor> interceptors, StreamAllocation streamAllocation,
@@ -83,6 +86,7 @@ public final class RealInterceptorChain implements Interceptor.Chain {
 
         // If we already have a stream, confirm that the incoming request will use it.
         // 如果我们有了流对象，请确保即将到来的请求可以共用它
+        // *** 在ConnectInterceptor中创建了httpCodec对象，从其中调用chain.proceed方法后到此httpCodec不为空 ***
         if (this.httpCodec != null && !sameConnection(request.url())) {
             throw new IllegalStateException("network interceptor " + interceptors.get(index - 1)
                     + " must retain the same host and port");
@@ -90,6 +94,7 @@ public final class RealInterceptorChain implements Interceptor.Chain {
 
         // If we already have a stream, confirm that this is the only call to chain.proceed().
         // 如果我们有流对象，请确保这是唯一的chain.proceed()的调用（calls不能大于1，否则状态异常）
+        // *** 在ConnectInterceptor中创建了httpCodec对象，从其中调用chain.proceed方法后到此httpCodec不为空 ***
         if (this.httpCodec != null && calls > 1) {
             throw new IllegalStateException("network interceptor " + interceptors.get(index - 1)
                     + " must call proceed() exactly once");
@@ -130,6 +135,13 @@ public final class RealInterceptorChain implements Interceptor.Chain {
         return response;
     }
 
+    /**
+     * 入参url是否和chain中持有的connection是相同的
+     * 满足的条件： host相同且port相同
+     *
+     * @param url
+     * @return
+     */
     private boolean sameConnection(HttpUrl url) {
         return url.host().equals(connection.route().address().url().host())
                 && url.port() == connection.route().address().url().port();

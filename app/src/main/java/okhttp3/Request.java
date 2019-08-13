@@ -238,11 +238,17 @@ public final class Request {
         }
 
         public Builder method(String method, RequestBody body) {
-            if (method == null) throw new NullPointerException("method == null");
-            if (method.length() == 0) throw new IllegalArgumentException("method.length() == 0");
+            if (method == null) {
+                throw new NullPointerException("method == null");
+            }
+            if (method.length() == 0) {
+                throw new IllegalArgumentException("method.length() == 0");
+            }
+            // 方法不允许有请求体，而body不为空
             if (body != null && !HttpMethod.permitsRequestBody(method)) {
                 throw new IllegalArgumentException("method " + method + " must not have a request body.");
             }
+            // 方法需要请求体，而body为空
             if (body == null && HttpMethod.requiresRequestBody(method)) {
                 throw new IllegalArgumentException("method " + method + " must have a request body.");
             }
