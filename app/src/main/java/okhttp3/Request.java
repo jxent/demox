@@ -143,7 +143,7 @@ public final class Request {
                 url = "https:" + url.substring(4);
             }
 
-            // 将url构造为一个HttpUrl对象
+            // 将字符串url构造为一个HttpUrl对象然后赋值给url属性
             HttpUrl parsed = HttpUrl.parse(url);
             if (parsed == null) {
                 throw new IllegalArgumentException("unexpected url: " + url);

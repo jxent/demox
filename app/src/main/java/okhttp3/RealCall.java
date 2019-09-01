@@ -65,7 +65,9 @@ final class RealCall implements Call {
     public Response execute() throws IOException {
         synchronized (this) {
             // 线程同步，重复调用此方法，抛出异常（一个call只能执行一次）
-            if (executed) throw new IllegalStateException("Already Executed");
+            if (executed) {
+                throw new IllegalStateException("Already Executed");
+            }
             executed = true;
         }
         captureCallStackTrace();

@@ -75,7 +75,8 @@ public interface Call extends Cloneable {
      * Create a new, identical call to this one which can be enqueued or executed even if this call
      * has already been.
      * <p>
-     * 依照当前对象创建一个新的、完全相同的call对象，这个新的call对象可以被execute或者enqueue，即使被克隆的call已经被执行过了
+     * 依照当前对象创建一个新的、完全相同的call对象，这个新的call对象可以被execute或者enqueue，
+     * 即使被克隆的call已经被execute或enqueue过了
      */
     Call clone();
 

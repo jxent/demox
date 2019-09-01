@@ -63,7 +63,11 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static okhttp3.internal.Util.closeQuietly;
 
 public final class RealConnection extends Http2Connection.Listener implements Connection {
-    public final List<Reference<StreamAllocation>> allocations = new ArrayList<>(); // 关联的StreamAllocation列表, 用来统计在一个连接上建立了哪些流，通过StreamAllocation的acquire方法和release方法可以将一个allcation对象添加到链表或者移除链表
+    /**
+     * 关联的StreamAllocation列表, 用来统计在一个连接上建立了哪些流，
+     * 通过StreamAllocation的acquire方法和release方法可以将一个allocation对象添加到此链表或者移除此链表
+     */
+    public final List<Reference<StreamAllocation>> allocations = new ArrayList<>();
     private final Route route;
     /**
      * The application layer socket. Either an {@link SSLSocket} layered over {@link #rawSocket}, or

@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+
 import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpDate;
 
@@ -304,13 +305,17 @@ public final class Headers {
     }
 
     private void checkNameAndValue(String name, String value) {
-      if (name == null) throw new NullPointerException("name == null");
-      if (name.isEmpty()) throw new IllegalArgumentException("name is empty");
+      if (name == null) {
+        throw new NullPointerException("name == null");
+      }
+      if (name.isEmpty()) {
+        throw new IllegalArgumentException("name is empty");
+      }
       for (int i = 0, length = name.length(); i < length; i++) {
         char c = name.charAt(i);
         if (c <= '\u001f' || c >= '\u007f') {
           throw new IllegalArgumentException(Util.format(
-              "Unexpected char %#04x at %d in header name: %s", (int) c, i, name));
+                  "Unexpected char %#04x at %d in header name: %s", (int) c, i, name));
         }
       }
       if (value == null) throw new NullPointerException("value == null");
@@ -318,7 +323,7 @@ public final class Headers {
         char c = value.charAt(i);
         if ((c <= '\u001f' && c != '\u0009' /* htab */) || c >= '\u007f') {
           throw new IllegalArgumentException(Util.format(
-              "Unexpected char %#04x at %d in %s value: %s", (int) c, i, name, value));
+                  "Unexpected char %#04x at %d in %s value: %s", (int) c, i, name, value));
         }
       }
     }

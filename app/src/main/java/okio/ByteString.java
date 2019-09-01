@@ -96,7 +96,9 @@ public class ByteString implements Serializable, Comparable<ByteString> {
 
   /** Returns a new byte string containing the {@code UTF-8} bytes of {@code s}. */
   public static ByteString encodeUtf8(String s) {
-    if (s == null) throw new IllegalArgumentException("s == null");
+    if (s == null) {
+      throw new IllegalArgumentException("s == null");
+    }
     ByteString byteString = new ByteString(s.getBytes(Util.UTF_8));
     byteString.utf8 = s;
     return byteString;

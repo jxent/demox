@@ -107,14 +107,14 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     public Response intercept(Chain chain) throws IOException {
         Request request = chain.request();
 
-        // 在这里创建了StreamAllocation对象
+        // 在这里创建了StreamAllocation对象，给整个请求实例化stream对象，其中保存了网络请求需要的组件
         streamAllocation = new StreamAllocation(
                 client.connectionPool(), createAddress(request.url()), callStackTrace);
 
         int followUpCount = 0;  // 记录次数
-        Response priorResponse = null;  // 会失败并且retry或者重定向，记录先前的response对象
+        Response priorResponse = null;  // 会失败并且retry，记录先前的response对象
 
-        // 这里是个死循环，多次retry或者follow up
+        // 这里是个死循环，多次retry and follow up
         while (true) {
             if (canceled) {
                 streamAllocation.release();
@@ -127,21 +127,25 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
                 /** 继续后续的链式调用，直到跟服务器产生交互，并返回response，然后如果捕获到异常，那么就是需要retry或者重定向请求了 **/
                 response = ((RealInterceptorChain) chain).proceed(request, streamAllocation, null, null);
                 releaseConnection = false;
-            } catch (RouteException e) {        // 路由异常，请求还没有被发送出去，continue while 循环
+            } catch (RouteException e) {
                 // The attempt to connect via a route failed. The request will not have been sent.
+                // 路由异常，请求还没有被送达，继续 while 循环，重试次数并不会+1
                 if (!recover(e.getLastConnectException(), false, request)) {
                     throw e.getLastConnectException();
                 }
                 releaseConnection = false;
                 continue;
-            } catch (IOException e) {       // 与服务器通信失败，请求有可能已经被发出去了，continue while 循环
+            } catch (IOException e) {
                 // An attempt to communicate with a server failed. The request may have been sent.
+                // 与服务器通信失败，请求可能已经被送达，继续 while 循环，重试次数并不会+1
                 boolean requestSendStarted = !(e instanceof ConnectionShutdownException);
-                if (!recover(e, requestSendStarted, request)) throw e;
+                if (!recover(e, requestSendStarted, request)) {
+                    throw e;
+                }
                 releaseConnection = false;
                 continue;
             } finally {
-                // 抛出一个未catch的异常，释放所有资源。
+                // 抛出一个未catch的异常，释放所有资源。releaseConnection为true，说明异常未被捕获
                 if (releaseConnection) {
                     streamAllocation.streamFailed(null);
                     streamAllocation.release();
@@ -149,9 +153,10 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
             }
 
             // Attach the prior response if it exists. Such responses never have a body.
-            // 关联之前的response，如果有的话，这些response绝不会有response body，只有response header，
+            // 关联之前的response，如果有的话，这些response不会有response body，只有response header，
             // 如果response body不为null，会在priorResponse内部抛出异常
             if (priorResponse != null) {
+                // 将response对象重新构建，填入priorResponse对象
                 response = response.newBuilder()
                         .priorResponse(priorResponse.newBuilder()
                                 .body(null)
@@ -166,11 +171,14 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
                 if (!forWebSocket) {
                     streamAllocation.release();
                 }
+                // follow up不可用，释放资源，返回出错的response
                 return response;
             }
 
             closeQuietly(response.body());
 
+            // 如果重试次数超过20，抛出异常结束（http://httpbin.org/redirect/21）
+            // 执行到此处，followUpCount才会+1，之前continue并不会+1
             if (++followUpCount > MAX_FOLLOW_UPS) {
                 streamAllocation.release();
                 throw new ProtocolException("Too many follow-up requests: " + followUpCount);
@@ -275,11 +283,12 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
      * follow-up is either unnecessary or not applicable, this returns null.
      *
      * 这个userResponse是上一次失败的请求的response，这个方法即会添加一些认证头部和重定向信息，也会处理一些
-     * 客户端请求超时操作 。如果follow-up不重要，
-     * 或者不可用，这个方法回返回null
+     * 客户端请求超时操作 。如果follow-up不必要，或者不可用，这个方法会返回null
      */
     private Request followUpRequest(Response userResponse) throws IOException {
-        if (userResponse == null) throw new IllegalStateException();
+        if (userResponse == null) {
+            throw new IllegalStateException();
+        }
         Connection connection = streamAllocation.connection();
         Route route = connection != null
                 ? connection.route()
@@ -327,14 +336,20 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
             case HTTP_MOVED_TEMP:       // 302
             case HTTP_SEE_OTHER:        // 303
                 // OkHttpClient已禁止重定向
-                if (!client.followRedirects()) return null;
+                if (!client.followRedirects()) {
+                    return null;
+                }
 
                 String location = userResponse.header("Location");
-                if (location == null) return null;
+                if (location == null) {
+                    return null;
+                }
                 HttpUrl url = userResponse.request().url().resolve(location);
 
                 // Location字段为空，或者其不是一个被支持的HttpUrl，返回null
-                if (url == null) return null;
+                if (url == null) {
+                    return null;
+                }
 
                 // If configured, don't follow redirects between SSL and non-SSL.
                 boolean sameScheme = url.scheme().equals(userResponse.request().url().scheme());

@@ -35,6 +35,9 @@ import static okhttp3.internal.Util.equal;
  * pinner.
  * <p>
  * <p>HTTP requests that share the same {@code Address} may also share the same {@link Connection}.
+ *
+ * 连接到一个服务器的connection的规格参数。如果是个普通的connection，这代表服务器的host和port。如果是使用了代理，则应该包含代理的信息
+ * 如果是secure connection，也应该包含ssl socket factory，hostname verifier以及certificate pinner等
  */
 public final class Address {
     final HttpUrl url;
@@ -59,10 +62,14 @@ public final class Address {
                 .port(uriPort)
                 .build();
 
-        if (dns == null) throw new NullPointerException("dns == null");
+        if (dns == null) {
+            throw new NullPointerException("dns == null");
+        }
         this.dns = dns;
 
-        if (socketFactory == null) throw new NullPointerException("socketFactory == null");
+        if (socketFactory == null) {
+            throw new NullPointerException("socketFactory == null");
+        }
         this.socketFactory = socketFactory;
 
         if (proxyAuthenticator == null) {
@@ -70,13 +77,19 @@ public final class Address {
         }
         this.proxyAuthenticator = proxyAuthenticator;
 
-        if (protocols == null) throw new NullPointerException("protocols == null");
+        if (protocols == null) {
+            throw new NullPointerException("protocols == null");
+        }
         this.protocols = Util.immutableList(protocols);
 
-        if (connectionSpecs == null) throw new NullPointerException("connectionSpecs == null");
+        if (connectionSpecs == null) {
+            throw new NullPointerException("connectionSpecs == null");
+        }
         this.connectionSpecs = Util.immutableList(connectionSpecs);
 
-        if (proxySelector == null) throw new NullPointerException("proxySelector == null");
+        if (proxySelector == null) {
+            throw new NullPointerException("proxySelector == null");
+        }
         this.proxySelector = proxySelector;
 
         this.proxy = proxy;

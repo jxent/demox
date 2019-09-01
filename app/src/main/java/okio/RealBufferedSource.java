@@ -449,7 +449,8 @@ final class RealBufferedSource implements BufferedSource {
     };
   }
 
-  @Override public void close() throws IOException {
+  @Override public void
+  close() throws IOException {
     if (closed) return;
     closed = true;
     source.close();

@@ -48,6 +48,8 @@ public final class BridgeInterceptor implements Interceptor {
     @Override
     public Response intercept(Chain chain) throws IOException {
         Request userRequest = chain.request();
+        // 使用原始的request对象重新build出个新的request对象，并使用它来继续后续的请求动作，
+        // 可能原始的request对象被外部引用了，会有安全问题
         Request.Builder requestBuilder = userRequest.newBuilder();
 
         RequestBody body = userRequest.body();
@@ -76,7 +78,8 @@ public final class BridgeInterceptor implements Interceptor {
         }
 
         // If we add an "Accept-Encoding: gzip" header field we're responsible for also decompressing
-        // the transfer stream.如果添加了"Accept-Encoding: gzip"请求头字段，我们有责任对传输流也进行解压缩
+        // the transfer stream.
+        // 如果添加了"Accept-Encoding: gzip"请求头字段，我们有责任对传输流也进行解压缩
         boolean transparentGzip = false;
         if (userRequest.header("Accept-Encoding") == null) {
             transparentGzip = true;

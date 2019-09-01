@@ -45,13 +45,15 @@ public final class ConnectionPool {
     /**
      * Background threads are used to cleanup expired connections. There will be at most a single
      * thread running per connection pool. The thread pool executor permits the pool itself to be
-     * garbage collected.一个用于清除过期链接的线程池，每个线程池最多只能运行一个线程，并且这个线程池允许被垃圾回收
+     * garbage collected.
+     * 一个用于清除过期链接的线程池，每个线程池最多只能运行一个线程，并且这个线程池允许被垃圾回收
      */
     private static final Executor executor = new ThreadPoolExecutor(0 /* corePoolSize */,
             Integer.MAX_VALUE /* maximumPoolSize */, 60L /* keepAliveTime */, TimeUnit.SECONDS,
             new SynchronousQueue<Runnable>(), Util.threadFactory("OkHttp ConnectionPool", true));
 
-    final RouteDatabase routeDatabase = new RouteDatabase();    // 路由的数据库，用来记录不可用的route，代码中并未使用
+    // 路由的数据库，用来记录不可用的route，代码中并未使用
+    final RouteDatabase routeDatabase = new RouteDatabase();
 
     /**
      * maxIdleConnections：The maximum number of idle connections for each address.每个address的最大空闲连接数，OkHttp只是限制与同一个远程服务器的空闲连接数量，对整体的空闲连接并没有限制。
@@ -125,8 +127,19 @@ public final class ConnectionPool {
 
     /**
      * Returns a recycled connection to {@code address}, or null if no such connection exists.
+     * 返回一个复用address的connection对象
      */
     RealConnection get(Address address, StreamAllocation streamAllocation) {
+        /**
+         * assert 断言，jdk1.4引入
+         * 默认关闭。可以局部开启，如：父类禁止断言，而子类开启断言，一般说“断言不具有继承性”。
+         * 断言只适用复杂的调式过程，一般用于程序执行结构的判断，千万不要让断言处理业务流程。
+         *
+         * java -ea 打开所有用户类的assertion，类似这种方式开启断言，在IDE的run configuration中配置vm arguments来配置断言
+         *
+         * 断言执行此处的线程持有此对象的锁，如果Thread.holdsLock(this)返回false，会抛出AssertException
+         * 也就是说，执行这个方法时，线程需要在此对象上保持着监视器锁，外层已经使用了 "synchronized (connectionPool) {"来加锁。
+         */
         assert (Thread.holdsLock(this));
         for (RealConnection connection : connections) {
             if (connection.allocations.size() < connection.allocationLimit
